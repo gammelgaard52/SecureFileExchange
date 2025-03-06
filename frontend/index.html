@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secure File Exchange</title>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <h2>Secure File Exchange</h2>
+    <input type="file" id="fileInput">
+    <input type="password" id="passwordInput" placeholder="Enter Password">
+    <button onclick="uploadFile()">Upload</button>
+    <p id="uploadResult"></p>
+
+    <h3>Available Files</h3>
+    <input type="password" id="listPasswordInput" placeholder="Enter Password to List Files">
+    <button onclick="listFiles()">List Files</button>
+    <ul id="fileList"></ul>
+</body>
+</html>
