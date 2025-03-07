@@ -1,0 +1,72 @@
+name: Deploy to Azure Web App (Non-Container)
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:  # Allow manual deployment
+
+permissions:
+  contents: read  # ✅ Required for checking out the repo
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev  # ✅ Runs in the "dev" environment
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # ✅ Install .NET 8 SDK
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      # ✅ Build the application
+      - name: Build Application
+        run: dotnet build ${{ github.workspace }}/backend/SecureFileExchange.csproj --configuration Release
+
+      # ✅ Publish application
+      - name: Publish Application
+        run: dotnet publish ${{ github.workspace }}/backend/SecureFileExchange.csproj --configuration Release --output ${{env.DOTNET_ROOT}}/myapp
+      
+      # ✅ Ensure Frontend Files are Included
+      - name: Copy Frontend Files to wwwroot
+        run: cp -r ${{ github.workspace }}/frontend/* ${{env.DOTNET_ROOT}}/myapp/wwwroot/
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy-app:
+    runs-on: ubuntu-latest
+    environment: dev  # ✅ Runs in the "dev" environment
+    needs: [build-and-deploy]
+    outputs:
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write
+
+    steps:
+        - name: Download artifact from build job
+          uses: actions/download-artifact@v4
+          with:
+            name: .net-app
+
+        # ✅ Login to Azure
+        - name: Log in to Azure
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+        # ✅ Deploy to Azure Web App
+        - name: Deploy to Azure Web App
+          uses: azure/webapps-deploy@v2
+          id: deploy-to-webapp
+          with:
+            app-name: app-tdcsft  # ✅ Replace with your actual Web App name
+            package: .
