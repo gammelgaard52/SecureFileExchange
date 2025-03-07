@@ -68,5 +68,5 @@ jobs:
           uses: azure/webapps-deploy@v2
           id: deploy-to-webapp
           with:
-            app-name: app-tdcsft  # ✅ Replace with your actual Web App name
+            app-name: web-tdcsft  # ✅ Replace with your actual Web App name
             package: .
