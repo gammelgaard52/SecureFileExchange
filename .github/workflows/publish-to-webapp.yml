@@ -34,7 +34,7 @@ jobs:
       
       # ✅ Ensure Frontend Files are Included
       - name: Copy Frontend Files to wwwroot
-        run: cp -r frontend/* ${{env.DOTNET_ROOT}}/myapp/wwwroot/
+        run: mkdir -p ${{env.DOTNET_ROOT}}/myapp/wwwroot/ && cp -r frontend/* ${{env.DOTNET_ROOT}}/myapp/wwwroot/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
