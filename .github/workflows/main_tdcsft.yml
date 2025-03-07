@@ -23,7 +23,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/gammelgaard52/securefileexchange:latest .
+          docker build -t ghcr.io/gammelgaard52/securefileexchange:latest -f backend/Dockerfile .
 
       - name: Push Docker image to GHCR
         run: |
