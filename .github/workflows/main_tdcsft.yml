@@ -42,5 +42,5 @@ jobs:
 
       - name: Deploy to Azure Web App (app-tdcsft)
         run: |
-          az webapp config container set --name app-tdcsft --resource-group rg-tdcsft \
+          az webapp config container set --name app-${{ vars.APP_NAME }} --resource-group rg-${{ vars.APP_NAME }} \
           --docker-custom-image-name ghcr.io/gammelgaard52/securefileexchange:latest
