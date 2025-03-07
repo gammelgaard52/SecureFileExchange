@@ -30,17 +30,19 @@ jobs:
 
       # ✅ Publish application
       - name: Publish Application
-        run: dotnet publish ${{ github.workspace }}/backend/SecureFileExchange.csproj --configuration Release --output ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish ${{ github.workspace }}/backend/SecureFileExchange.csproj --configuration Release --output ${{github.workspace}}/published-app
       
       # ✅ Ensure Frontend Files are Included
       - name: Copy Frontend Files to wwwroot
-        run: cp -r frontend/* ${{env.DOTNET_ROOT}}/myapp/
+        run: |
+            mkdir -p ${{ github.workspace }}/published-app/wwwroot
+            cp -r ${{ github.workspace }}/frontend/* ${{ github.workspace }}/published-app/wwwroot/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{ github.workspace }}/published-app
 
   deploy-app:
     runs-on: ubuntu-latest
