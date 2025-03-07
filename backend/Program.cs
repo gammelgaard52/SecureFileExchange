@@ -15,7 +15,7 @@ namespace SecureFileExchange
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseWebRoot("wwwroot"); // ✅ Ensures frontend is served
+                    webBuilder.UseUrls("http://*:5000"); // ✅ Force the application to listen on port 5000
                 });
     }
 }
