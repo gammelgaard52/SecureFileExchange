@@ -1,48 +1,42 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy container app to Azure Web App - tdcsft
+name: Build and Deploy to Azure
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allow manual deployment
+
+permissions:
+  packages: write  # ✅ Allow pushing Docker images to GHCR
+  contents: read   # ✅ Allow workflow access to repo contents
 
 jobs:
-  build:
-    runs-on: 'ubuntu-latest'
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to registry
-      uses: docker/login-action@v2
-      with:
-        registry: https://ghcr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_9a0f83ee0c1544ff8a412660475ab510 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_e1d278ec9cd741f8a6b4abe834824807 }}
-
-    - name: Build and push container image to registry
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: ghcr.io/${{ secrets.AzureAppService_ContainerUsername_9a0f83ee0c1544ff8a412660475ab510 }}/securefileexchange:${{ github.sha }}
-        file: ./Dockerfile
-
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'tdcsft'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_fb8a170264134311aaa8912c77e738ff }}
-        images: 'ghcr.io/${{ secrets.AzureAppService_ContainerUsername_9a0f83ee0c1544ff8a412660475ab510 }}/securefileexchange:${{ github.sha }}'
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/gammelgaard52/securefileexchange:latest ./backend
+
+      - name: Push Docker image to GHCR
+        run: |
+          docker push ghcr.io/gammelgaard52/securefileexchange:latest
+
+  deploy-to-azure:
+    needs: build-and-push  # Deploy only after the image is pushed
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App (app-tdcsft)
+        run: |
+          az webapp config container set --name app-tdcsft --resource-group rg-tdcsft \
+          --docker-custom-image-name ghcr.io/gammelgaard52/securefileexchange:latest

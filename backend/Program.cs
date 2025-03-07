@@ -15,6 +15,7 @@ namespace SecureFileExchange
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseWebRoot("wwwroot"); // ✅ Ensures frontend is served
                 });
     }
 }
