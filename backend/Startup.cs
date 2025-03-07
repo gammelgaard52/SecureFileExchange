@@ -24,14 +24,13 @@ namespace SecureFileExchange
                 app.UseDeveloperExceptionPage();
             }
 
-            // ✅ Serve static frontend files from wwwroot/
+            // ✅ Serve frontend (static files) from wwwroot/
             app.UseDefaultFiles(); // Serves index.html automatically
             app.UseStaticFiles();  // Serves JS, CSS, images, etc.
 
             app.UseRouting();
             app.UseCors("AllowAll");
 
-            // ✅ API endpoints remain functional
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
