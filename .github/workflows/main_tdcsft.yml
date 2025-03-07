@@ -32,6 +32,7 @@ jobs:
   deploy-to-azure:
     needs: build-and-push  # Deploy only after the image is pushed
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Log in to Azure
