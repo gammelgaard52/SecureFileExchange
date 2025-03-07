@@ -12,10 +12,14 @@ namespace SecureFileExchange
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            // ✅ Enable CORS for API requests
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", builder =>
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader());
             });
         }
 
@@ -26,26 +30,38 @@ namespace SecureFileExchange
                 app.UseDeveloperExceptionPage();
             }
 
-            // ✅ Serve frontend (static files)
+            // ✅ Serve frontend (static files from wwwroot)
             app.UseDefaultFiles(); // Ensures index.html is served automatically
             app.UseStaticFiles();  // Serves JS, CSS, etc.
 
-            // ✅ If accessing an unknown route, return `index.html` (for SPA support)
             app.UseRouting();
             app.UseCors("AllowAll");
+
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllers(); // API routes
             });
 
-            // ✅ Fallback to index.html for unknown routes
+            // ✅ Redirect unknown routes (except API) to index.html (for SPA support)
             app.Use(async (context, next) =>
             {
-                if (!Path.HasExtension(context.Request.Path.Value) && !context.Request.Path.Value.StartsWith("/api"))
+                if (!Path.HasExtension(context.Request.Path.Value) && 
+                    !context.Request.Path.Value.StartsWith("/api"))
                 {
                     context.Request.Path = "/index.html";
                     await next();
                 }
+                else
+                {
+                    await next();
+                }
+            });
+
+            // ✅ Serve index.html as fallback
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.WebRootPath)),
+                RequestPath = ""
             });
         }
     }

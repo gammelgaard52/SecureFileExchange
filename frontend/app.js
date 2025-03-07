@@ -1,54 +1,7 @@
-async function deriveKeyFromPassword(password) {
-  const encoder = new TextEncoder();
-  const salt = encoder.encode("fixed_salt_value"); // Ensure this is the same for both encryption and decryption
-  const iterations = 100000;
-  const hash = "SHA-256";
-
-  // Convert password to key material
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
-  );
-
-  // Derive key using PBKDF2
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: iterations,
-      hash: hash,
-    },
-    keyMaterial,
-    { name: "AES-CBC", length: 256 },
-    true,
-    ["encrypt", "decrypt"]
-  );
-}
-
-async function encryptFile(file, key) {
-  // Accept the derived key instead of deriving it again
-  const iv = crypto.getRandomValues(new Uint8Array(16)); // Generate 16-byte IV
-
-  const fileBuffer = await file.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    {
-      name: "AES-CBC",
-      iv: iv,
-    },
-    key,
-    fileBuffer
-  );
-
-  // Prepend IV to encrypted data
-  const combinedBuffer = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-  combinedBuffer.set(iv, 0);
-  combinedBuffer.set(new Uint8Array(encryptedBuffer), iv.length);
-
-  return { encryptedFile: new Blob([combinedBuffer]), iv };
-}
+// Dynamically set API base URL based on environment
+const API_BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : window.location.origin + "/api";  // Automatically detect Azure URL
 
 async function uploadFile() {
   let fileInput = document.getElementById("fileInput");
@@ -69,7 +22,7 @@ async function uploadFile() {
     formData.append("password", passwordInput.value);
     formData.append("iv", btoa(String.fromCharCode(...iv))); // Encode IV as Base64
 
-    let response = await fetch("http://localhost:5000/api/files/upload", {
+    let response = await fetch(`${API_BASE_URL}/files/upload`, {
       method: "POST",
       body: formData,
     });
@@ -87,9 +40,7 @@ async function uploadFile() {
 
 async function downloadFile(password, fileId, fileName) {
   try {
-    let response = await fetch(
-      `http://localhost:5000/api/files/download/${password}/${fileId}`
-    );
+    let response = await fetch(`${API_BASE_URL}/files/download/${password}/${fileId}`);
     let encryptedFile = await response.blob();
     let fileBuffer = await encryptedFile.arrayBuffer();
 
@@ -107,9 +58,7 @@ async function downloadFile(password, fileId, fileName) {
       encryptedData
     );
 
-    let decryptedFile = new Blob([decryptedBuffer], {
-      type: "application/octet-stream",
-    });
+    let decryptedFile = new Blob([decryptedBuffer], { type: "application/octet-stream" });
     let a = document.createElement("a");
     a.href = URL.createObjectURL(decryptedFile);
     a.download = fileName;
@@ -129,12 +78,9 @@ async function listFiles() {
   }
 
   try {
-    let response = await fetch(
-      `http://localhost:5000/api/files/list/${encodeURIComponent(password)}`,
-      {
-        method: "GET",
-      }
-    );
+    let response = await fetch(`${API_BASE_URL}/files/list/${encodeURIComponent(password)}`, {
+      method: "GET",
+    });
 
     if (!response.ok) {
       console.error("Error listing files:", response.statusText);
